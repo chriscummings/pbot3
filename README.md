@@ -18,7 +18,9 @@ Minimal effort approach: throw a copy of pbot onto a spare raspberry pi in a tmu
 
 -----
 
-### TODO
+## Work-In-Progress Stuff
+
+### TODO:
 
 - nix sqlite in favor of redis
 - prompt(s) for 
@@ -29,6 +31,19 @@ Minimal effort approach: throw a copy of pbot onto a spare raspberry pi in a tmu
 - rate limiting
 - Incite chaos!
 
+### Links
 
+- OpenAI [chatgpt](https://chat.openai.com/)
+  - [API](https://platform.openai.com/docs/overview)
+  - [OpenAI Cookbook](https://cookbook.openai.com/)
+  - [Pricing](https://openai.com/pricing)
+  - [Rate limits](https://platform.openai.com/docs/guides/rate-limits/?context=tier-free)
+- https://stackoverflow.com/questions/48561981/activate-python-virtualenv-in-dockerfile
+- https://pythonspeed.com/articles/activate-virtualenv-dockerfile/
+- https://www.reddit.com/r/ChatGPT/comments/11gmcsi/openemotions_jailbreak_20_released/
+- https://cookbook.openai.com/examples/how_to_count_tokens_with_tiktoken
+- Bard [chat](https://bard.google.com/chat)
+    - https://aibard.online/bard-api-documentation/
+    - https://github.com/ra83205/google-bard-api
 
 
