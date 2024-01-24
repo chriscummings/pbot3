@@ -1,6 +1,6 @@
 # pbot3 | A Dockerized, GPT assisted, mean-spirited Discord bot. 
 
-![](shodan_transparent.png)
+![](docs/assets/img/shodan_transparent.png)
 
 What if SHODAN's pettyness and cruelty were directed at a hapless Discord server?
 
