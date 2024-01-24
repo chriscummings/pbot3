@@ -10,7 +10,7 @@ Do your friends need to be put in their place?
 
 Have they grown soft and complacent within the confines of their confortable private server?
 
-Release pbot in your Discord server and allow her to scortch and salt the earth.
+Release pbot in your Discord server and allow her to scortch ***and*** salt the earth.
 
 -----
 
