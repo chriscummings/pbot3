@@ -6,7 +6,7 @@ What if SHODAN's pettyness and cruelty were directed at a hapless Discord server
 
 --
 
-Minimal effort approach: throw a copy of pbot onto a spare raspberry pi in a tmux session and spew bad vibes into the noosphere passively. :sleeping::boom:
+Minimal effort approach: throw a copy of pbot onto a spare raspberry pi in a tmux session and spew bad vibes into the noosphere passively. :sleeping::boom::broken_heart::hurtrealbad:
 
 -----
 
