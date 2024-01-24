@@ -45,5 +45,5 @@ Minimal effort approach: throw a copy of pbot onto a spare raspberry pi in a tmu
 - Bard [chat](https://bard.google.com/chat)
     - https://aibard.online/bard-api-documentation/
     - https://github.com/ra83205/google-bard-api
-
+- [Discord dev docs](https://discord.com/developers/applications)
 
