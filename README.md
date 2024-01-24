@@ -1,11 +1,10 @@
-# pbot3
+# pbot3 | A Dockerized, GPT assisted, mean-spirited Discord bot. 
 
 ![](shodan_transparent.png)
 
-A Dockerized, GPT assisted, mean-spirited Discord bot. 
+What if SHODAN's pettyness and cruelty were directed at a hapless Discord server?
 
-Incite chaos!
-
+-----
 
 ### TODO
 
@@ -16,6 +15,7 @@ Incite chaos!
   - madlib templates with AI supplied words?
 - token tracking
 - rate limiting
+- Incite chaos!
 
 
 
