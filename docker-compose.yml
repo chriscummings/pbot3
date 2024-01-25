@@ -29,8 +29,8 @@ services:
 
    backend:
         build:
-          context: .
-          dockerfile: services/backend/Dockerfile          
+          context: ./services/backend
+          dockerfile: Dockerfile          
         container_name: pbot3-backend
         ports:
             - "5001:5001"
