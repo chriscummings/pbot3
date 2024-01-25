@@ -9,8 +9,11 @@ ENV PYTHONUNBUFFERED 1
 WORKDIR /src
 
 # Install dependencies
-COPY ./src/requirements.txt .
+COPY services/backend/src/requirements.txt .
 RUN pip install -r requirements.txt
 
 # Copy project
 COPY . .
+
+# Just keep running.
+ENTRYPOINT ["tail", "-f", "/dev/null"]
