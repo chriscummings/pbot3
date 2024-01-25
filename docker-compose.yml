@@ -1,0 +1,45 @@
+services:
+
+   redis: 
+     image: redis/redis-stack-server
+     container_name: redis
+     ports:
+       - '6379:6379' 
+     platform: linux/arm64
+     volumes:
+       - redis_data:/data
+
+   redisinsight:
+      image: redislabs/redisinsight:latest
+      ports:
+      - '8001:8001'
+      # platform: linux/arm64 
+
+   bot:
+        build:
+          context: .
+          dockerfile: services/pbot/Dockerfile        
+        container_name: pbot3-bot
+        ports:
+            - "5000:5000"
+        volumes:
+            - .:/src
+        depends_on:
+            - redis
+
+   backend:
+        build:
+          context: .
+          dockerfile: services/backend/Dockerfile          
+        container_name: pbot3-backend
+        ports:
+            - "5001:5001"
+        volumes:
+            - .:/src
+        depends_on:
+            - redis
+
+
+
+volumes:
+  redis_data:
