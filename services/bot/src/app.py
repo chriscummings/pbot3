@@ -152,6 +152,10 @@ def create_response(persona, messages, target_message_id):
 		# print("--")
 		# print(key_message)
 
+
+		"""should it be? for the following change, you are pbot. respond to the statement x as pbot.
+		"""
+
 		scene.append({"role":"user", "content":joined_message})
 		scene.append({"role":"system", "content": "You are pbot. Given the previous context, respond to the following message:"})
 		scene.append({"role":"user", "content":key_message["content"]})	
@@ -164,14 +168,12 @@ def create_response(persona, messages, target_message_id):
 		chat_completion = openai_client.chat.completions.create(
 			messages=scene,
 			model='gpt-3.5-turbo',
-			max_tokens=500,
+			max_tokens=3000-0,
 			temperature=1, #0-2
 			n=1,
 			user=key_message["user_name"]
 		)
 
-		if len(chat_completion.choices[0].message.content.strip()) > 2000:
-			chat_completion.choices[0].message.content = "My response was too long."
 
 		# Clean up completion id
 		completion_id = chat_completion.id.replace("chatcmpl-", "")

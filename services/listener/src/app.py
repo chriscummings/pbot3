@@ -7,6 +7,8 @@ from logger import logger
 from discord.ext import commands, tasks
 from listen.process_msg import process_msg
 from datetime import datetime, timedelta
+import time
+
 
 # Set up intents for bot.
 intents = discord.Intents.default()
@@ -19,8 +21,33 @@ redis_client = Redis(host='redis', port=6379, decode_responses=True)
 
 
 
+def chunk_str(blurb, size):
+	"""Breaks string up (on whitespace) by chunk size."""
+	if len(blurb) > size:
+		all_chunks = []
+		current_line = ""
+		words = blurb.split(" ")
 
+		for i, word in enumerate(words):
+			# If str wouldn't exceed chunk size:
+			if (len(current_line) + len(word) + 1) < size:
+				# If its the initial, empty line.
+				if current_line == "":
+					current_line = str(word)
+				# Otherwise append + space.
+				else:
+					current_line += " "+str(word)
+			# Otherwise, start a new chunk
+			else:
+				all_chunks.append(current_line)
+				current_line = str(word)
 
+		# Append last chunk segment.
+		all_chunks.append(current_line)
+
+		return all_chunks
+	else:
+		return [blurb]
 
 @tasks.loop(seconds=1)
 async def response_check():
@@ -41,16 +68,24 @@ async def response_check():
 
 		if response["sent_at"] == "":
 			channel = discord_client.get_channel(int(channle_id))
-			print(channel.name)
 			msg = channel.get_partial_message(int(response["message_id"]))
 
+			# Break message by max post length.
+			chunks = chunk_str(response["message"], 1000)
 
 			try:
-				print("posting message")
-				print(response)
-				print(len(response["message"]))
-				await msg.reply(response["message"])
+	
+				# Handle multi message-length response
+				if len(chunks) > 1:
+					for chunk in chunks:
+						await msg.reply(chunk)
+						time.sleep(0.25)
+				# Just fire single response
+				else:
+					await msg.reply(chunks[0])
+
 				redis_client.hset("resp:"+resp_id, "sent_at", datetime.now().timestamp())
+
 
 			except Exception as error:
 				pass
