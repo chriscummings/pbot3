@@ -57,3 +57,4 @@ Example: `invoke someTaskName`
 - [Discord API](https://discordpy.readthedocs.io/en/stable/api.html#message)
 - [discord.py](https://discordpy.readthedocs.io/en/stable/api.html)
 - [best-practices-for-prompt-engineering-with-openai-api)](https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-openai-api)
+- [https://platform.openai.com/docs/guides/prompt-engineering](https://platform.openai.com/docs/guides/prompt-engineering)
