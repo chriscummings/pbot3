@@ -1,0 +1,3 @@
+redis
+discord
+python-dotenv

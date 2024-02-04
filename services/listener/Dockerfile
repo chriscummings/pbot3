@@ -10,11 +10,9 @@ WORKDIR /src
 
 # Install dependencies
 COPY ./src/requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip3 install -r requirements.txt
 
 # Copy project
 COPY ./src .
 
-# Just keep running.
-ENTRYPOINT ["tail", "-f", "/dev/null"]
-# CMD python3 app.py
+CMD python3 app.py

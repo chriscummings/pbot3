@@ -5,14 +5,26 @@
 What if SHODAN's pettyness and cruelty were directed at a hapless Discord server?
 
 - Do your friends need to be put in their place?
-- Have they grown soft and complacent within the confines of their confortable private server?
-- Release pbot in your Discord server and allow her to scortch ***and*** salt the earth.
+- Have they grown soft and complacent within the confines of their confortable private servers?
+- Release pbot in your Discord server and allow her to scortch ***and*** salt the earth!
 
 -----
 
-Minimal effort approach: throw a copy of pbot onto a spare raspberry pi in a tmux session and spew bad vibes into the noosphere passively. :sleeping::boom::broken_heart::hurtrealbad:
+**Minimal effort approach:** throw a copy of pbot onto a spare Raspberry Pi in a tmux session and spew bad vibes into the noosphere passively. :sleeping::boom::broken_heart::hurtrealbad:
+<br>
 
 -----
+
+# Usage
+
+..
+
+# Devlopment
+
+Many development tasks are handled by the [invoke](https://docs.pyinvoke.org/en/stable/) python library. See `tasks.py`. 
+Example: `invoke someTaskName`
+
+
 
 ## Work-In-Progress Stuff
 
@@ -42,4 +54,15 @@ Minimal effort approach: throw a copy of pbot onto a spare raspberry pi in a tmu
     - https://aibard.online/bard-api-documentation/
     - https://github.com/ra83205/google-bard-api
 - [Discord dev docs](https://discord.com/developers/applications)
+- [Discord API](https://discordpy.readthedocs.io/en/stable/api.html#message)
+- [discord.py](https://discordpy.readthedocs.io/en/stable/api.html)
+
+# All activity
+zset msg_activity 398598346598346 <servername/id>
+# Activity by server
+zset server_activity-<servername/id> 398598346598346 <msgId>
+
+hset <msgId> {data}
+
+
 

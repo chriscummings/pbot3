@@ -9,11 +9,13 @@ ENV PYTHONUNBUFFERED 1
 WORKDIR /src
 
 # Install dependencies
-COPY services/pbot/src/requirements.txt .
-RUN pip install -r requirements.txt
+COPY services/bot/src/requirements.txt .
+RUN pip3 install -r requirements.txt
+
+# Copy persona prompt
+COPY config/persona-prompt.txt .
 
 # Copy project
-COPY . .
+COPY services/bot/src .
 
-# Just keep running.
-ENTRYPOINT ["tail", "-f", "/dev/null"]
+CMD tail -f /dev/null
