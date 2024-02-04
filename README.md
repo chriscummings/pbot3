@@ -56,13 +56,4 @@ Example: `invoke someTaskName`
 - [Discord dev docs](https://discord.com/developers/applications)
 - [Discord API](https://discordpy.readthedocs.io/en/stable/api.html#message)
 - [discord.py](https://discordpy.readthedocs.io/en/stable/api.html)
-
-# All activity
-zset msg_activity 398598346598346 <servername/id>
-# Activity by server
-zset server_activity-<servername/id> 398598346598346 <msgId>
-
-hset <msgId> {data}
-
-
-
+- [best-practices-for-prompt-engineering-with-openai-api)](https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-openai-api)
