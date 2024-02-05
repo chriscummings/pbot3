@@ -18,18 +18,24 @@ from discord.ext import commands
 affinity_words = ["the empreror", "40k"]
 history_delve_time = timedelta(hours=6) # How far back to look for channel activity.
 
+encoding_name = "cl100k_base"
+
+
 # Load hateful words to avoid.
 phobic_words = []
 with open("./.phobic-words.txt") as f:
 	content = f.read()
 	phobic_words=content.split("\n")
 
-
 def mark_as_read(messages):
 	for message in messages:
 		redis_client.hset("msg:"+message["id"], "read_at", datetime.now().timestamp())
 
-
+def num_tokens_from_string(str):
+    """Returns the number of tokens in a text string."""
+    encoding = tiktoken.get_encoding(encoding_name)
+    num_tokens = len(encoding.encode(str))
+    return num_tokens
 
 def response_chance_for_messages(messages):
 	"""Determine if messages should be responded to and which one.
@@ -52,7 +58,6 @@ def response_chance_for_messages(messages):
 	assessed_messages = []
 
 	for i, message in enumerate(messages):
-		#print("inspecting comment ({}){}".format(message["read_at"],message["content"]))
 
 		assessed_messages.append(message)
 
@@ -67,7 +72,7 @@ def response_chance_for_messages(messages):
 
 		# Always address earliest direct references to bot.
 		if "pbot" in message["content"].lower() and message["bot"] == "0" and message["read_at"] == "":
-			print("Exiting chance for direct pbot call.")
+			logger.debug("Exiting message reply chance b/c of a direct call")
 			mark_as_read(assessed_messages)
 			return (sys.maxsize, message["id"])
 
@@ -95,7 +100,7 @@ def response_chance_for_messages(messages):
 
 	# If there are no (real) users, bail.
 	if(len(users)) == 0:
-		print("Exiting chance as it's all bots!")
+		logger.debug("Exiting message reply chance b/c it's all bots.")
 		mark_as_read(messages)
 		return(-99,0)
 
@@ -113,11 +118,45 @@ def response_chance_for_messages(messages):
 	mark_as_read(messages)
 	return (modifier, max(message_values, key=message_values.get))
 
-def create_response(persona, messages, target_message_id):
+def create_response(messages, target_message_id):
+		
+		logger.info("create response to {}".format(target_message_id))
+
+		# TODO: add relationship history and user summaries in the mix.
+
 		print("create a resp")
 
+		instruction = ""
+		token_count = 0
+
+		# Load/update prompt(s).
+		with open("prompt-persona.txt") as f:
+			instruction += f.read().strip()
+		with open("prompt-instruction.txt") as f:
+			instruction += f.read().strip()
+
+		token_count += num_tokens_from_string(instruction)
+
+		# Trim message history to conserve tokens. -----------------------------
+		messages.sort(key=lambda x: float(x["timestamp"]), reverse=True)
+		cutoff_index = None
+		for i, msg in enumerate(messages):
+			msg_tokens = num_tokens_from_string(msg["content"])
+
+			if i == 0:
+				token_count += msg_tokens
+			else:
+				if(token_count + num_tokens_from_string(msg["content"]) > 2000):
+					cutoff_index = i
+					break
+				else:
+					token_count += num_tokens_from_string(msg["content"])
+		# Trim history as needed.
+		if cutoff_index:
+			messages = messages[0:cutoff_index]
+
+
 		scene = []
-		# TODO: add relationship history and user summaries in the mix.
 		messages.sort(key=lambda x: float(x["timestamp"]), reverse=False)
 
 		joined_message = ""
@@ -126,6 +165,7 @@ def create_response(persona, messages, target_message_id):
 		message_group = []
 
 		for message in messages:
+			# Use server nick if present.
 			username = message["user_name"]
 			if(message["user_nick"] != ""):
 				username = message["user_nick"]
@@ -134,11 +174,11 @@ def create_response(persona, messages, target_message_id):
 			if current_user != username:
 				# Check for & handle unsent messages in buffer..
 				if len(message_group) > 0:
+					# Merge consecutive messages by same person.
 					compacted_messages = ""
 					for msg in message_group:
 						compacted_messages += " "+msg["content"]
 					joined_message += "{}:{} \n".format(current_user, compacted_messages)
-
 				message_group = []
 				current_user = username
 				message_group.append(message)
@@ -148,32 +188,28 @@ def create_response(persona, messages, target_message_id):
 		joined_message += "{}:{} \n".format(username, message["content"])
 		key_message = list(filter(lambda x: x["id"] == target_message_id, messages))[0]
 
-		# print(joined_message)
-		# print("--")
-		# print(key_message)
 
+		instruction = instruction.replace("chat_history", joined_message)
+		instruction = instruction.replace("target_message", key_message["content"])
 
-		"""should it be? for the following change, you are pbot. respond to the statement x as pbot.
-		"""
+		# Reassign token count to the end result token count.
+		token_count = num_tokens_from_string(instruction)
 
-		scene.append({"role":"user", "content":joined_message})
-		scene.append({"role":"system", "content": "You are pbot. Given the previous context, respond to the following message:"})
-		scene.append({"role":"user", "content":key_message["content"]})	
-		scene.append({"role":"system", "content": persona})
-		
-		# pp = pprint.PrettyPrinter(indent=4)
-		# pp.pprint(scene)
+		logger.debug("About to submit the following(tokens:{}):{}".format(token_count,instruction))
+
+		scene.append({"role":"system", "content": instruction})
 
 		# FIXME: exception handling
 		chat_completion = openai_client.chat.completions.create(
 			messages=scene,
+			max_tokens=4000-token_count,
 			model='gpt-3.5-turbo',
-			max_tokens=3000-0,
 			temperature=1, #0-2
 			n=1,
 			user=key_message["user_name"]
 		)
 
+		logger.debug("OPENAI completetion message: "+chat_completion.choices[0].message.content.strip())
 
 		# Clean up completion id
 		completion_id = chat_completion.id.replace("chatcmpl-", "")
@@ -209,17 +245,10 @@ bot = commands.Bot("", intents=intents)
 redis_client = Redis(host="redis", port=6379, decode_responses=True)
 openai_client = OpenAI(api_key=os.environ.get("OPENAI_KEY"))
 
-
 # ------------------------------------------------------------------------------
 
 while True:
 	print("----------------")
-
-	# Load/update persona prompt.
-	with open("./.secret-prompt.txt") as f:
-		content = f.read().strip()
-	redis_client.set("persona-prompt", content)
-
 
 	# Get recent messages.
 	timestamp = (datetime.now() - history_delve_time).timestamp()
@@ -241,9 +270,6 @@ while True:
 		if not channel_id in activity_by_channel.keys():
 			activity_by_channel[channel_id] = redis_client.zrangebyscore("channel:"+channel_id+":activity", history_cutoff.timestamp(), '+inf', withscores=True)
 
-	for c in activity_by_channel.keys():
-		print("{} Starting with {} messages.".format(c, len(activity_by_channel[c])))
-
 	# Replace tuples w actual messages.
 	for channel_id in activity_by_channel.keys():
 		message_ids = list(map(lambda x: x[0], activity_by_channel[channel_id]))
@@ -261,10 +287,6 @@ while True:
 			# Add message.
 			activity_by_channel[channel_id].append(message)
 
-	for c in activity_by_channel.keys():
-		print("{} yet {} messages.".format(c, len(activity_by_channel[c])))
-
-
 	# Ensure channel convo isn't all read
 	read_channels = []
 	for channel_id in activity_by_channel.keys():
@@ -277,9 +299,6 @@ while True:
 	for key in read_channels:
 		print("Removing channel of all read")
 		del activity_by_channel[key]
-
-	for c in activity_by_channel.keys():
-		print("{} again {} messages.".format(c, len(activity_by_channel[c])))
 
 	# Sort and remove responded-to conversation.
 	for channel_id in activity_by_channel.keys():
@@ -300,43 +319,24 @@ while True:
 			# Chop messages prior to responded-to message.
 			activity_by_channel[channel_id] = messages[0:responded_index]
 
-	for c in activity_by_channel.keys():
-		print("{} continues {} messages.".format(c, len(activity_by_channel[c])))
-
-	# pp = pprint.PrettyPrinter(indent=4)
-	# pp.pprint(activity_by_channel)
-
 	for chan in activity_by_channel.keys():
 		messages = activity_by_channel[chan]
-
-		print("Channel {} has {} messages".format(chan, len(messages)))
 
 		response_chance,target_message_id = response_chance_for_messages(messages)
 
 		roll = random.randrange(100)
 		# roll = 0# FIXME: remove this
 
-		print("-it has a response chance of {}".format(response_chance))
-
 		if(response_chance > roll):
 			try:
-				persona=redis_client.get("persona-prompt")
-				create_response(persona, messages, target_message_id)
+				create_response(messages, target_message_id)
 			except Exception as error:
 				print(error)
-				pass # log & retry?
-			# send response
-			# update message w response time & id
-		else:
-			print("FUCK")
-			# pp = pprint.PrettyPrinter(indent=4)
-			# pp.pprint(activity_by_channel)
+				pass
+			 	# TODO: log & retry?
 
-			pass
-			# mark last message reviewed?
-
-	# raise Exception("dfsdf")
 	time.sleep(0.5)
+
 """
 Every loop:
 get messages since <some-time-ago>

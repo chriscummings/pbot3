@@ -1,17 +1,32 @@
+"""
+	Logging to both stdout and file.
+"""
+
 import logging
+import os
 
-logger = logging.getLogger("pbot-listener")
+# Params -----------------------------------------------------------------------
 
+name = "pbot-listener"
+filename = "pbot-listener.log"
+file_log_level = logging.NOTSET
+console_log_level = file_log_level
+file_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+console_format = '%(name)s - %(levelname)s - %(message)s'
+
+# ------------------------------------------------------------------------------
+path = os.path.join("./", filename)
+logger = logging.getLogger(name)
 logging.root.setLevel(logging.NOTSET)
 
 c_handler = logging.StreamHandler()
-f_handler = logging.FileHandler('pbot-listener.log')
+f_handler = logging.FileHandler(path)
 
 c_handler.setLevel(logging.NOTSET)
 f_handler.setLevel(logging.NOTSET)
 
-c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
-f_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+c_format = logging.Formatter(console_format)
+f_format = logging.Formatter(file_format)
 
 c_handler.setFormatter(c_format)
 f_handler.setFormatter(f_format)

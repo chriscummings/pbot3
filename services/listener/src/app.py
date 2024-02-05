@@ -1,3 +1,5 @@
+"""
+"""
 import os
 from redis import Redis
 import discord
@@ -9,7 +11,6 @@ from listen.process_msg import process_msg
 from datetime import datetime, timedelta
 import time
 
-
 # Set up intents for bot.
 intents = discord.Intents.default()
 intents.messages = True
@@ -18,8 +19,6 @@ intents.message_content = True
 # Set up clients.
 discord_client = discord.Client(intents=intents)
 redis_client = Redis(host='redis', port=6379, decode_responses=True)
-
-
 
 def chunk_str(blurb, size):
 	"""Breaks string up (on whitespace) by chunk size."""
@@ -49,14 +48,14 @@ def chunk_str(blurb, size):
 	else:
 		return [blurb]
 
-@tasks.loop(seconds=1)
+@tasks.loop(seconds=2)
 async def response_check():
-	print("heartbeat")
-
 	# Get recent responses.
-	response_delve_time = timedelta(days=5)
+	response_delve_time = timedelta(hours=1)
 	timestamp = (datetime.now() - response_delve_time).timestamp()
 	response_activity = redis_client.zrangebyscore("response_activity", timestamp, '+inf', withscores=True)
+
+	logger.debug(response_activity)
 
 	# Handle any unsent.
 	for k in response_activity:
@@ -67,36 +66,34 @@ async def response_check():
 		response = redis_client.hgetall("resp:"+resp_id)
 
 		if response["sent_at"] == "":
+			logger.info("handling response {}".format(response["id"]))
 			channel = discord_client.get_channel(int(channle_id))
 			msg = channel.get_partial_message(int(response["message_id"]))
 
-			# Break message by max post length.
-			chunks = chunk_str(response["message"], 1000)
-
-			try:
-	
-				# Handle multi message-length response
-				if len(chunks) > 1:
+			if len(response["message"]) > 2000:
+				chunks = chunk_str(response["message"], 2000)
+				try:
 					for chunk in chunks:
 						await msg.reply(chunk)
-						time.sleep(0.25)
-				# Just fire single response
-				else:
-					await msg.reply(chunks[0])
-
-				redis_client.hset("resp:"+resp_id, "sent_at", datetime.now().timestamp())
-
-
-			except Exception as error:
-				pass
-				#FIXME: handle this
-
+					redis_client.hset("resp:"+resp_id, "sent_at", datetime.now().timestamp())
+				except Exception as error:
+					print(error)
+					logger.error(error)
+			else:
+				try:
+					await msg.reply(response["message"])
+					redis_client.hset("resp:"+resp_id, "sent_at", datetime.now().timestamp())
+				except Exception as error:
+					print(error)
+					logger.error(error)
 
 # Events -----------------------------------------------------------------------
 
 @discord_client.event
 async def on_ready():
-	print('We have logged in as {0.user}'.format(discord_client))
+	login_msg = 'We have logged in as {0.user}'.format(discord_client)
+	print(login_msg)
+	logger.debug(login_msg)
 	response_check.start()
 
 @discord_client.event
@@ -112,10 +109,6 @@ async def on_message(message):
 	logger.debug(log_string)
 
 	process_msg(redis_client, message)
-
-
-
-
 
 # Exec -------------------------------------------------------------------------
 
