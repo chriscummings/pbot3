@@ -61,5 +61,5 @@ Example: `invoke someTaskName`
 
 ### Stray Bits
 - TODO: add OPTION for other paid service ais like midjourney but don't assume it in handling pbot
-- this is basically a pet you can add to your discord servers. shape and "market" it as such
-
+- this is basically a pet you can add to your discord servers. shape and "market" it as such?
+- TODO: add option to use a secondary call to verify and/or otherwise handle things if the inital completion request flagged as a failure (includes "as a llm", "sorry, but I can’t", etc.). Ask it if the LLM answered the request or refused and what should be generated now? 
