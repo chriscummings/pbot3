@@ -1,0 +1,36 @@
+
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h2>Discord Channel: {{channel["name"]}}</h2>
+
+<h3>Recent messages</h3>
+<ul>
+{% for message in messages %}
+	<li
+		{% if message["user_name"] == "pbot3" %}
+			style="background:#ddd;"
+		{% endif %}
+	
+	>
+
+
+
+		<small>{{message["timestamp"]|format_timestamp}}</small> |  <b>{{message["user_name"]}}</b>: {{message["content"]}}
+	</li>
+{% endfor %}
+</ul>
+
+
+<h2>Known Users:</h2>
+<ul>
+{% for user in users%}
+	<li>
+		<a href="{{ url_for('user', user_id=user['id']) }}">{{user["name"]}}</a>
+	</li>
+{% endfor %}
+</ul>
+
+{% endblock %}
+

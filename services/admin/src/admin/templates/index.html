@@ -1,0 +1,24 @@
+
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h2>Available Servers:</h2>
+<ul>
+{% for server in servers%}
+	<li>
+		<a href="{{ url_for('server', server_id=server['id']) }}">{{server["name"]}}</a></li>
+	</li>
+{% endfor %}
+</ul>
+
+<h2>Known Users:</h2>
+<ul>
+{% for user in users%}
+	<li>
+		<a href="{{ url_for('user', user_id=user['id']) }}">{{user["name"]}}</a>
+	</li>
+{% endfor %}
+</ul>
+
+{% endblock %}

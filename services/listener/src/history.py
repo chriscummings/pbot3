@@ -22,25 +22,9 @@ redis_client = Redis(host='redis', port=6379)
 @discord_client.event
 async def on_ready():
 	for guild in discord_client.guilds:
-
-		# Handle a new server.
-		if(not redis_client.exists("server:"+str(guild.id))):
-			redis_client.hset("server:"+str(guild.id), mapping={
-				"id":guild.id,
-				"name":guild.name
-			})
-
 		for c in guild.channels:
 			chan = discord_client.get_channel(c.id)
 			if(chan.__class__.__name__ == "TextChannel"):
-
-				# Handle a new channel.
-				if(not redis_client.exists("channel:"+str(chan.id))):
-					redis_client.hset("channel:"+str(chan.id), mapping={
-						"id":chan.id,
-						"name":chan.name,
-						"server_id":guild.id
-					})
 
 				print(guild.name+"_"+chan.name)
 
@@ -51,13 +35,12 @@ async def on_ready():
 				while valid_results:
 					pages += 1
 
-					# FIXME: remove this
-					if pages > 1:
+					# FIXME: remove this !!!!!!!!!!!!!!!!!
+					if pages > 4:
 						break
 
-
 					last_msg = await chan.fetch_message(last_msg_id)
-					messages = [message async for message in chan.history(limit=50, before=last_msg)]
+					messages = [message async for message in chan.history(limit=100, before=last_msg)]
 					if len(messages) == 0:
 						valid_results = False
 						break

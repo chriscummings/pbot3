@@ -66,7 +66,7 @@ async def response_check():
 		response = redis_client.hgetall("resp:"+resp_id)
 
 		if response["sent_at"] == "":
-			logger.info("handling response {}".format(response["id"]))
+			logger.info("handling response to {}".format(response["message_id"]))
 			channel = discord_client.get_channel(int(channle_id))
 			msg = channel.get_partial_message(int(response["message_id"]))
 
