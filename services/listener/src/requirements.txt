@@ -1,3 +1,4 @@
 redis
 discord
 python-dotenv
+pylint

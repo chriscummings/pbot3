@@ -1,12 +1,16 @@
+"""
+History fetch
+"""
 import os
+from datetime import datetime
+#
 from redis import Redis
 import discord
 from dotenv import load_dotenv
-import json
+#
 from logger import logger
-import time
 from listen.process_msg import process_msg
-from datetime import datetime
+
 
 # Set up intents for bot.
 intents = discord.Intents.default()
@@ -21,39 +25,38 @@ redis_client = Redis(host='redis', port=6379)
 
 @discord_client.event
 async def on_ready():
-	for guild in discord_client.guilds:
-		for c in guild.channels:
-			chan = discord_client.get_channel(c.id)
-			if(chan.__class__.__name__ == "TextChannel"):
+    """
+    tbd
+    """
+    for guild in discord_client.guilds:
+        for c in guild.channels:
+            chan = discord_client.get_channel(c.id)
+            if chan.__class__.__name__ == "TextChannel":
 
-				print(guild.name+"_"+chan.name)
+                print(guild.name+"_"+chan.name)
 
-				valid_results = True
-				last_msg_id = chan.last_message_id
+                valid_results = True
+                last_msg_id = chan.last_message_id
 
-				pages = 0
-				while valid_results:
-					pages += 1
+                pages = 0
+                while valid_results:
+                    pages += 1
 
-					# FIXME: remove this !!!!!!!!!!!!!!!!!
-					if pages > 4:
-						break
+                    last_msg = await chan.fetch_message(last_msg_id)
+                    messages = [message async for message in chan.history(
+                        limit=100, before=last_msg)]
 
-					last_msg = await chan.fetch_message(last_msg_id)
-					messages = [message async for message in chan.history(limit=100, before=last_msg)]
-					if len(messages) == 0:
-						valid_results = False
-						break
+                    if len(messages) == 0:
+                        valid_results = False
+                        break
 
-					last_msg_id = messages[-1].id
-					for message in messages:
+                    last_msg_id = messages[-1].id
+                    for message in messages:
 
-						process_msg(redis_client, message, datetime.now().timestamp())
+                        process_msg(redis_client, message, datetime.now().timestamp())
 
-				
-	raise Exception("halt")
+    raise Exception("halt") # FIXME:
 
-# Exec -------------------------------------------------------------------------
 
 load_dotenv()
 discord_client.run(os.getenv('DISCORD_TOKEN'))

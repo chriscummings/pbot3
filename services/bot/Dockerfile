@@ -18,4 +18,5 @@ COPY config/persona-prompt.txt .
 # Copy project
 COPY services/bot/src .
 
+# FIXME: call app instead of just run forever..
 CMD tail -f /dev/null

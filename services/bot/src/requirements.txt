@@ -5,3 +5,5 @@ discord
 python-dotenv
 ratelimit
 asyncio
+pytest
+pylint

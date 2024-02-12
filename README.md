@@ -1,4 +1,4 @@
-# pbot3 | A Dockerized, GPT assisted, mean-spirited Discord bot. 
+# pbot3 | A Dockerized, GPT assisted, mean-spirited Discord bot.
 
 ![](docs/assets/img/shodan_transparent.png)
 
@@ -8,30 +8,26 @@ What if SHODAN's pettyness and cruelty were directed at a hapless Discord server
 - Have they grown soft and complacent within the confines of their confortable private servers?
 - Release pbot in your Discord server and allow her to scortch ***and*** salt the earth!
 
------
+## Usage
 
 **Minimal effort approach:** throw a copy of pbot onto a spare Raspberry Pi in a tmux session and spew bad vibes into the noosphere passively. :sleeping::boom::broken_heart::hurtrealbad:
 <br>
 
------
+## Devlopment
 
-# Usage
+### Before committing..
+- Pylint must run clean!
+- All tests must succeed!
 
-..
-
-# Devlopment
-
-Many development tasks are handled by the [invoke](https://docs.pyinvoke.org/en/stable/) python library. See `tasks.py`. 
+Many development tasks are handled by the [invoke](https://docs.pyinvoke.org/en/stable/) python library. See `tasks.py`.
 Example: `invoke someTaskName`
-
-
 
 ## Work-In-Progress Stuff
 
 ### TODO:
 
 - nix sqlite in favor of redis
-- prompt(s) for 
+- prompt(s) for
   - openai?
   - bard?
   - madlib templates with AI supplied words?
@@ -58,6 +54,7 @@ Example: `invoke someTaskName`
 - [discord.py](https://discordpy.readthedocs.io/en/stable/api.html)
 - [best-practices-for-prompt-engineering-with-openai-api)](https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-openai-api)
 - [https://platform.openai.com/docs/guides/prompt-engineering](https://platform.openai.com/docs/guides/prompt-engineering)
+- https://help.openai.com/en/articles/4936856-what-are-tokens-and-how-to-count-them
 
 ### Stray Bits
 - TODO: add OPTION for other paid service ais like midjourney but don't assume it in handling pbot

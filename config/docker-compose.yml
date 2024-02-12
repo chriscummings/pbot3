@@ -1,10 +1,19 @@
 # Base compose file.
 
 services:
-  
+
+  testdb: # dev only
+    image: redis/redis-stack-server
+    container_name: pbot-redis-test
+    ports:
+    - '1111:6379'
+    platform: linux/arm64
+    networks:
+    - backend
+
   redis: 
     image: redis/redis-stack-server
-    container_name: redis
+    container_name: pbot-redis
     ports:
     - '6379:6379' 
     platform: linux/arm64
@@ -13,10 +22,9 @@ services:
     networks:
     - backend
 
-  # Dev only?
-  redis-insight:
+  redis-insight: # dev only
     image: redislabs/redisinsight:latest
-    container_name: redis-insight
+    container_name: pbot-redis-insight
     ports:
     - '8001:8001'
     # platform: linux/arm64 
@@ -27,7 +35,7 @@ services:
     - backend
 
   bot:
-    container_name: pbot3-bot
+    container_name: pbot-bot
     build:
       context: ../
       dockerfile: services/bot/Dockerfile     
@@ -42,9 +50,13 @@ services:
     environment:
       - DISCORD_TOKEN=${DISCORD_TOKEN}
       - OPENAI_KEY=${OPENAI_KEY}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - TEST_REDIS_HOST=${TEST_REDIS_HOST}
+      - TEST_REDIS_PORT=${TEST_REDIS_PORT}
 
   listener:
-    container_name: pbot3-listener
+    container_name: pbot-listener
     build:
       context: ./services/listener
       dockerfile: Dockerfile     
@@ -61,7 +73,7 @@ services:
     build:
       context: ./services/admin
       dockerfile: Dockerfile          
-    container_name: pbot3-admin
+    container_name: pbot-admin
     ports:
     - "7777:7777"
     volumes:

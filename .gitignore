@@ -1,7 +1,5 @@
-**.phobic-words.txt
-
-
-**.secret-prompt
+# We don't want these in our repo!
+**phobic-words.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

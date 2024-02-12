@@ -1,6 +1,4 @@
-
 {% extends 'base.html' %}
-
 {% block content %}
 
 <h2>Discord Server: {{server["name"]}}</h2>
@@ -26,17 +24,12 @@
 {% for message in messages %}
 	<li
 		{% if message["user_name"] == "pbot3" %}
-			style="background:#ddd;"
+		class="bot_message"
 		{% endif %}
-	
 	>
-
-
-
 		<small>{{message["timestamp"]|format_timestamp}}</small> |  <b>{{message["user_name"]}}</b>: {{message["content"]}}
 	</li>
 {% endfor %}
 </ul>
 
 {% endblock %}
-

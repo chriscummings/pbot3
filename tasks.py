@@ -1,28 +1,42 @@
-from invoke import task
+"""
+General dev tasks.
+"""
 import subprocess
+#
+from invoke import task
 import docker
 
 
+CUSTOM_DOCKER_IMAGES = [
+	"pbot-bot",
+	"pbot-listener",
+	"pbot-admin",
+	"pbot-redis-test"
+]
+
 client = docker.from_env()
 
-custom_docker_images = [
-	"pbot-admin",
-	"pbot-listener",
-	"pbot-proxy",
-	"pbot-bot"
-]
+# Tasks ------------------------------------------------------------------------
 
 @task
 def devbounce(ctx):
-	'''Deletes any old artifacts and rebuids & runs from scratch.'''
-	# Prune non-running containers
-	resp = client.containers.prune()
+	"""
+	Deletes any old artifacts and rebuids & runs from scratch.
+	"""
 
-	# Delete pbot custom images
-	current_images = client.images.list()
-	for current_img in current_images:
-		for image_name in custom_docker_images:
-			if image_name in " ".join(current_img.tags):
+	# Stop and remove pbot containers.
+	for container in client.containers.list(all=True):
+		print(container.name)
+		if container.name in CUSTOM_DOCKER_IMAGES:
+			if container.status == "running":
+				container.kill()
+			container.remove()
+
+	# Delete pbot images
+	for image in client.images.list():
+		for image_name in CUSTOM_DOCKER_IMAGES:
+			if image_name in " ".join(image.tags):
+				print(image_name)
 				client.images.remove(image_name)
 
-	subprocess.run(["docker-compose", "-ppbot", "-f./config/docker-compose.yml", "up"])
+	subprocess.run(["docker-compose", "-ppbot", "-f./config/docker-compose.yml", "up", "--detach"])
