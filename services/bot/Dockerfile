@@ -13,7 +13,7 @@ COPY services/bot/src/requirements.txt .
 RUN pip3 install -r requirements.txt
 
 # Copy persona prompt
-COPY config/persona-prompt.txt .
+# COPY config/persona-prompt.txt .
 
 # Copy project
 COPY services/bot/src .
