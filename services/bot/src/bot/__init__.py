@@ -61,6 +61,7 @@ def was_refused(resp):
         "As a large language model",
         "as a llm",
         "As an AI language model",
+        "I apologize, but"
     ]
 
     for flag in problem_substrings:
@@ -174,8 +175,9 @@ def response_chance(messages): # FIXME: refator.
                 total_phobic_word_count += 1
 
         conditions = [
-            message["bot"] == "1",
-            message["content"] == ""
+            message["bot"] == "1", # Don't respond to bots.
+            message["content"] == "", # Don't respond to empty messages.
+            message["is_read"] != "" # Don't respond to already reviewed and ignored messages.
         ]
 
         if any(conditions):
@@ -225,7 +227,7 @@ def generate_response(openai_client, messages, target_message_id, persona, instr
         if message["user_nick"] != "":
             username = message["user_nick"]
 
-        message_history_as_str += f"{username}:{message["content"]}\n"
+        message_history_as_str += f"{username}:{message['content']}\n"
 
 
 
