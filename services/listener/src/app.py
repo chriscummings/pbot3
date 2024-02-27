@@ -8,10 +8,11 @@ from redis import Redis
 import discord
 from dotenv import load_dotenv
 from discord.ext import tasks
+import pysnooper
 #
 from logger import logger
 from listen.process_msg import process_msg
-
+from pprint import pprint
 
 # Set up intents for bot.
 intents = discord.Intents.default()
@@ -108,10 +109,11 @@ async def on_message(message):
     """
     tbd
     """
+
     log_str = f"{message.created_at}|{message.id}|"
     log_str += f"{message.guild.name}.{message.channel.name}|"
     log_str += f"{message.author.name}({message.author.nick}):"
-    log_str += f"{message.clean_content}"
+    log_str += f"{message.content}"
     logger.debug(log_str)
 
     process_msg(redis_client, message)

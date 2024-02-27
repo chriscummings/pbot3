@@ -38,11 +38,16 @@ async def on_ready():
                 valid_results = True
                 last_msg_id = chan.last_message_id
 
+                print(last_msg_id)
+
                 pages = 0
                 while valid_results:
                     pages += 1
 
+                    if pages > 20: break # FIXME: remove this
+
                     last_msg = await chan.fetch_message(last_msg_id)
+
                     messages = [message async for message in chan.history(
                         limit=100, before=last_msg)]
 
@@ -53,9 +58,10 @@ async def on_ready():
                     last_msg_id = messages[-1].id
                     for message in messages:
 
-                        process_msg(redis_client, message, datetime.now().timestamp())
+                        process_msg(redis_client, message, message.created_at.timestamp())
 
     raise Exception("halt") # FIXME:
+
 
 
 load_dotenv()

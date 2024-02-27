@@ -1,35 +1,25 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<h2>Discord Server: {{server["name"]}}</h2>
+<div class="row" id="breadcrumbs">
+	<div class="col">
+		<a href="{{ url_for('index') }}"><i class="bi bi-house"></i></a> /
+		<a href="{{ url_for('servers') }}">servers</a> /
+		<em>{{ server['name'] }}</em>
+	</div>
+</div>
 
-<h3>Channels</h3>
-<ul>
-{% for channel in channels %}
-	<li><a href="{{url_for('channel', channel_id=channel['id'])}}">{{channel["name"]}}</a></li>
-{% endfor %}
-</ul>
+<div class="row">
+	<div class="col-2">
+		<ul class="list_nav">
+			<li><a href="{{url_for('server_channels', server_id=server['id'])}}">Channels</a></li>
+			<li><a href="{{url_for('server_users', server_id=server['id'])}}">Users</a></li>
+			<li><a href="{{url_for('server_settings', server_id=server['id'])}}">Settings</a></li>
+		</ul>
+	</div>
+	<div class="col-10">
 
-<h2>Known Users:</h2>
-<ul>
-{% for user in users%}
-	<li>
-		<a href="{{ url_for('user', user_id=user['id']) }}">{{user["name"]}}</a>
-	</li>
-{% endfor %}
-</ul>
-
-<h3>Recent messages</h3>
-<ul>
-{% for message in messages %}
-	<li
-		{% if message["user_name"] == "pbot3" %}
-		class="bot_message"
-		{% endif %}
-	>
-		<small>{{message["timestamp"]|format_timestamp}}</small> |  <b>{{message["user_name"]}}</b>: {{message["content"]}}
-	</li>
-{% endfor %}
-</ul>
+	</div>
+</div>
 
 {% endblock %}

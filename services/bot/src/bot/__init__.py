@@ -1,7 +1,9 @@
 """
 Temp home for bot functions.
 """
+import os
 import sys
+from pathlib import Path
 from datetime import datetime, timedelta
 #
 from openai import OpenAI
@@ -110,17 +112,29 @@ def mark_as_read(redis_client, messages):
     for message in messages:
         redis_client.hset("message:"+message["id"], "read_at", datetime.now().timestamp())
 
-def response_chance(messages): # FIXME: refator.
+def is_image(url_path):
+    discord_friendly_image_files = [
+        ".jpg", ".jpeg", ".png", ".gif", ".gifv"
+    ]
+
+    path = Path(url_path.lower())
+
+    if path.suffix in discord_friendly_image_files:
+        return True
+
+    return False
+
+def response_chance(redis_client, messages): # FIXME: refator.
     """
     Determines the chance pbot will generate a response for message history and
-    provides the key message ID pbot should address.
+    provides the key message ID pbot should address and optionally, a url.
 
     Returns a tuple (%chance, key_message_id)
     """
 
-    # Bounce on no massages.
+    # Bounce on no messages.
     if len(messages) == 0:
-        return (0, None)
+        return (0, None, None)
 
     # Message history totals.
     # TODO: Add in user-affinity and other modifiers.
@@ -129,6 +143,7 @@ def response_chance(messages): # FIXME: refator.
     total_affinity_word_count = 0
     total_phobic_word_count = 0
     users = set()
+    includes_image = False
 
     messages.sort(key=lambda x: float(x["timestamp"]), reverse=False)  # ascending
 
@@ -144,6 +159,15 @@ def response_chance(messages): # FIXME: refator.
         phobic_word_count = 0
         word_count = 0
 
+        image_files = []
+
+        if hasattr(message, "images"):
+            image_files = message["images"]
+
+        file_reference = None
+        if len(image_files) > 0:
+            file_reference = image_files[0] # FIXME:
+
         conditions = [
             "pbot" in message["content"].lower(),
             message["bot"] == "0",
@@ -154,7 +178,7 @@ def response_chance(messages): # FIXME: refator.
         # Always address earliest direct references to bot.
         if all(conditions):
             #mark_as_read(assessed_messages) #??????????
-            return (sys.maxsize, message["id"])
+            return (sys.maxsize, message["id"], file_reference)
 
         # Initial message interest value.
         message_values[message["id"]] = 0
@@ -163,6 +187,9 @@ def response_chance(messages): # FIXME: refator.
 
         if message["bot"] == "0":
             users.add(message["user_id"])
+
+        if len(image_files) > 0:
+            includes_image = True
 
         for affinity_word in AFFINITY_WORDS:
             if affinity_word.lower() in message["content"].lower():
@@ -177,7 +204,7 @@ def response_chance(messages): # FIXME: refator.
         conditions = [
             message["bot"] == "1", # Don't respond to bots.
             message["content"] == "", # Don't respond to empty messages.
-            message["is_read"] != "" # Don't respond to already reviewed and ignored messages.
+            message["read_at"] != "" # Don't respond to already reviewed and ignored messages.
         ]
 
         if any(conditions):
@@ -186,6 +213,9 @@ def response_chance(messages): # FIXME: refator.
             message_values[message["id"]] += (
                 affinity_word_count + (word_count * 0.15) - (phobic_word_count * 0.7)
             )
+
+            if includes_image:
+                message_values[message["id"]] += 5
 
     # If there are no (real) users, bail.
     if (len(users)) == 0:
@@ -197,17 +227,31 @@ def response_chance(messages): # FIXME: refator.
 
     modifier = 0  # starting chance
 
-    modifier += len(assessed_messages) * 0.025
+    modifier += len(assessed_messages) * 0.012
 
     modifier += len(users) * 0.025
 
-    modifier += duration_in_m * 0.025
+    #modifier += duration_in_m * 0.025 # maybe the opposite?
 
     modifier += total_affinity_word_count * 0.05
 
     modifier -= total_phobic_word_count * 0.1
 
-    return (modifier, max(message_values, key=message_values.get))
+    if includes_image:
+        modifier += 10
+
+    key_message_id = max(message_values, key=message_values.get)
+
+    key_message = list(filter(lambda x:x["id"]==key_message_id, messages))[0]
+
+    image_ref = None
+
+    if hasattr(key_message, "images"):
+
+        if len(key_message["images"]) > 0:
+            image_ref = key_message["images"][0]
+
+    return (modifier, key_message_id, image_ref)
 
 def generate_response(openai_client, messages, target_message_id, persona, instruction):
     """
@@ -229,9 +273,11 @@ def generate_response(openai_client, messages, target_message_id, persona, instr
 
         message_history_as_str += f"{username}:{message['content']}\n"
 
-
-
     key_message = list(filter(lambda x: x["id"] == target_message_id, messages))[0]
+
+    if hasattr(key_message, "images"):
+        if len(key_message["images"]) > 0:
+            raise Exception("dfdfd")
 
     instruction = instruction.replace("chat_history", message_history_as_str)
     instruction = instruction.replace("target_message", key_message["content"])
@@ -246,7 +292,6 @@ def generate_response(openai_client, messages, target_message_id, persona, instr
     token_count += num_tokens_from_string('system')
     token_count += num_tokens_from_string('content')
 
-
     try:
         chat_completion = openai_client.chat.completions.create(
             messages=scene,
@@ -257,9 +302,34 @@ def generate_response(openai_client, messages, target_message_id, persona, instr
             user=key_message["user_name"],
         )
 
-        print(chat_completion)
-
         return chat_completion
     except Exception as error: # FIXME: too permissive.
         print(error)
         return None
+
+def get_message_objects(redis_client, messages):
+    """
+    returns messages with related objects bolted on.
+    """
+    for message in messages:
+
+        # Attach image objects.
+        message["images"] = []
+
+        # Attachments take priority over any image links found in message.
+        if message["attachment_count"] != "0":
+            for attachment_id in redis_client.lrange(f"message:{message['id']}:attachments", 0, -1):
+                attachment = redis_client.hgetall(f"attachment:{attachment_id}")
+                if is_image(attachment["url"]):
+                    message["images"].append(attachment["url"])
+
+        if message["link_count"] != "0":
+
+            for link_id in redis_client.lrange(f"message:{message['id']}:links", 0, -1):
+
+
+                link = redis_client.hgetall(f"link:{link_id}")
+
+
+                if is_image(link["url"]):
+                    message["images"].append(link["url"])

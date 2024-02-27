@@ -1,63 +1,123 @@
-# pbot3 | A Dockerized, GPT assisted, mean-spirited Discord bot.
+# pBot
 
-![](docs/assets/img/shodan_transparent.png)
+Version 0.1.31
 
-What if SHODAN's pettyness and cruelty were directed at a hapless Discord server?
+Warning: This project is pre version 1!
 
-- Do your friends need to be put in their place?
-- Have they grown soft and complacent within the confines of their confortable private servers?
-- Release pbot in your Discord server and allow her to scortch ***and*** salt the earth!
 
-## Usage
 
-**Minimal effort approach:** throw a copy of pbot onto a spare Raspberry Pi in a tmux session and spew bad vibes into the noosphere passively. :sleeping::boom::broken_heart::hurtrealbad:
-<br>
 
-## Devlopment
+## Development <a name="development"></a>
 
-### Before committing..
-- Pylint must run clean!
-- All tests must succeed!
+### Application Structure
 
-Many development tasks are handled by the [invoke](https://docs.pyinvoke.org/en/stable/) python library. See `tasks.py`.
-Example: `invoke someTaskName`
+pBot is broken into 3 services.
 
-## Work-In-Progress Stuff
+- **Admin** - web UI for bot administration and experimentation (see sandbox).
+- **Listener** - handles interactions with discord. Collects incoming messages, sends any responses.
+- **Bot** - the bot proper. Evaluates messages. Conditionally makes calls to AI.
+
+```
+                             ┌──────────┐
+                             │ Discord  │
+                             └──────────┘
+                                   ▲
+               ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┼ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐
+                Docker             ▼
+               │              ┌────────┐               │
+                              │Listener│
+               │              │Service │               │
+                              └────────┘
+               │                   ▲                   │
+┌──────────┐                       │
+│  OpenAI  │◀─┐│  ┌────────┐       ▼       ┌────────┐  │
+└──────────┘  │   │  Bot   │    ┌─────┐    │ Admin  │
+              ├┼─▶│Service │◀──▶│Redis│◀──▶│Service │  │
+┌──────────┐  │   └────────┘    └─────┘    └────────┘
+│Midjourney│◀─┘│                                       │
+└──────────┘    ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
+```
+
+### Model Structure
+
+.
+
+### Dependencies
+
+#### Python
+
+| Dependency | Admin Service | Bot Service | Listener Service |
+|:---|:---:|:---:|:---:|
+| [discord](https://discordpy.readthedocs.io/en/stable/) | | | &#x2705; |
+| [Flask](https://flask.palletsprojects.com/en/3.0.x/) | &#x2705; | | |
+| [openai](https://pypi.org/project/openai/) | | &#x2705; | |
+| [pylint](https://pypi.org/project/pylint/) | &#x2705; | &#x2705; | &#x2705; |
+| [pytest](https://docs.pytest.org/en/8.0.x/) | &#x2705; | &#x2705; | &#x2705; |
+| [python-dotenv](https://pypi.org/project/python-dotenv/) | &#x2705; | &#x2705; | &#x2705; |
+| [ratelimit](https://pypi.org/project/ratelimit/) | | &#x2705; | &#x2705; |
+| [tiktoken](https://pypi.org/project/tiktoken/) | | &#x2705; | |
+| [redis-py](https://redis-py.readthedocs.io/en/stable/) | &#x2705; | &#x2705; | &#x2705; |
+
+#### Front-End
+
+| Dependency | Admin Service | Bot Service | Listener Service |
+|:---|:---:|:---:|:---:|
+| [Bootstrap 5](https://getbootstrap.com/) | &#x2705; | | |
+
+### Contributing
+
+Fork & submit a pull request. I'll try to reply quickly. :pray:
+
+#### Design Philosophy
+
+While there is stil much to do, pBot is meant to be a simple bot framework on which you can experiment and build. Dependencies and patterns have been chosen to this end. <ins>Always keep the novice developer in mind.</ins> As tempting as it might be to write *clever* code, doing so probably wont do newer developers any favors.
+
+#### Code Quality
+
+- Write code for humans first, machines second.
+- Comments should explain why, not how.
+- Code should be written as
+self-documenting as possible.
+- Code should have tests behind it and those tests must pass!
+- Pylint should pass 100%. You can ignore a rule if there is a good reason (dependency causes ignorable issue) but document why.
+
+### Helpful Third Party Documentation
+
+#### OpenAI
+
+- [API Documentation](https://platform.openai.com/docs/overview)
+- [OpenAI Cookbook](https://cookbook.openai.com/)
+- [Developer Forums](https://community.openai.com/)
+- [Pricing](https://openai.com/pricing)
+- [Rate limits](https://platform.openai.com/docs/guides/rate-limits?context=tier-free)
+- [Prompt engineering guide](https://platform.openai.com/docs/guides/prompt-engineering)
+- [Best practices for prompt engineering](https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api)
+- [Tokens](https://help.openai.com/en/articles/4936856-what-are-tokens-and-how-to-count-them)
+
+#### Discord
+
+- [Discord Developer Portal](https://discord.com/developers)
+- [discord.py](https://discordpy.readthedocs.io/en/stable/index.html)
+- [Rate limits](https://discord.com/developers/docs/topics/rate-limits)
+
+#### Midjourney
+
+- [docs.midjourney.com](https://docs.midjourney.com/docs/quick-start)
+
+#### Future Bard Stuff
+
+- [https://aibard.online/bard-api-documentation/](https://aibard.online/bard-api-documentation/)
+- [https://github.com/ra83205/google-bard-api](https://github.com/ra83205/google-bard-api)
+
+#### Misc.
+
+- [Semantic versioning](https://semver.org/)
 
 ### TODO:
 
-- nix sqlite in favor of redis
-- prompt(s) for
-  - openai?
-  - bard?
-  - madlib templates with AI supplied words?
-- token tracking
+- Handle a monthly token allotment. Ration AI responses for both openai and midjourney.
+- Image "mirroring"
+- More robust multi-call decision making?
 - rate limiting
 - Incite chaos!
-
-### Links
-
-- OpenAI [chatgpt](https://chat.openai.com/)
-  - [API](https://platform.openai.com/docs/overview)
-  - [OpenAI Cookbook](https://cookbook.openai.com/)
-  - [Pricing](https://openai.com/pricing)
-  - [Rate limits](https://platform.openai.com/docs/guides/rate-limits/?context=tier-free)
-- https://stackoverflow.com/questions/48561981/activate-python-virtualenv-in-dockerfile
-- https://pythonspeed.com/articles/activate-virtualenv-dockerfile/
-- https://www.reddit.com/r/ChatGPT/comments/11gmcsi/openemotions_jailbreak_20_released/
-- https://cookbook.openai.com/examples/how_to_count_tokens_with_tiktoken
-- Bard [chat](https://bard.google.com/chat)
-    - https://aibard.online/bard-api-documentation/
-    - https://github.com/ra83205/google-bard-api
-- [Discord dev docs](https://discord.com/developers/applications)
-- [Discord API](https://discordpy.readthedocs.io/en/stable/api.html#message)
-- [discord.py](https://discordpy.readthedocs.io/en/stable/api.html)
-- [best-practices-for-prompt-engineering-with-openai-api)](https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-openai-api)
-- [https://platform.openai.com/docs/guides/prompt-engineering](https://platform.openai.com/docs/guides/prompt-engineering)
-- https://help.openai.com/en/articles/4936856-what-are-tokens-and-how-to-count-them
-
-### Stray Bits
-- TODO: add OPTION for other paid service ais like midjourney but don't assume it in handling pbot
-- this is basically a pet you can add to your discord servers. shape and "market" it as such?
-- TODO: add option to use a secondary call to verify and/or otherwise handle things if the inital completion request flagged as a failure (includes "as a llm", "sorry, but I can’t", etc.). Ask it if the LLM answered the request or refused and what should be generated now?
-- MAYBE: update bot status to typing if waiting for response. must be channel specific.
+- document invoke usage

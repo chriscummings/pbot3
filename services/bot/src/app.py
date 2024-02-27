@@ -21,7 +21,8 @@ from bot import (
     response_chance,
     mark_as_read,
     generate_response,
-    was_refused
+    was_refused,
+    is_image
 )
 
 # Vars -------------------------------------------------------------------------
@@ -60,6 +61,9 @@ def bot_run(): # FIXME: refactor.
     for channel_id in active_channels(redis_client,
         hours=ACTIVE_CHANNEL_CUTOFF_HOURS):
 
+        # if channel_id != "974065195565609040":
+        #     continue
+
         message_ids = channel_message_ids(
             redis_client,
             channel_id,
@@ -67,8 +71,7 @@ def bot_run(): # FIXME: refactor.
 
         messages = get_messages(redis_client, message_ids)
 
-        # If all read
-        if len(list(filter(lambda x:x["read_at"] == "", messages))) == 0:
+        if len(list(filter(lambda x:x["read_at"] == "", messages))) < 1:
             continue
 
         max_tokens = MAX_INPUT_TOKENS - (
@@ -76,7 +79,29 @@ def bot_run(): # FIXME: refactor.
 
         messages = trim_message_history(messages, max_tokens=max_tokens)
 
-        chance, target_message_id = response_chance(messages)
+        # Tack on image attachments and links
+        for message in messages:
+            message["images"] = []
+
+            if message["attachment_count"] != "0":
+                for attachment_id in redis_client.lrange(f"message:{message['id']}:attachments", 0, -1):
+                    attachment = redis_client.hgetall(f"attachment:{attachment_id}")
+                    if is_image(attachment["url"]):
+                        message["images"].append(attachment["url"])
+
+            if message["link_count"] != "0":
+                for link_id in redis_client.lrange(f"message:{message['id']}:links", 0, -1):
+                    link = redis_client.hgetall(f"link:{link_id}")
+                    if is_image(link["url"]):
+                        message["images"].append(link["url"])
+
+        chance, target_message_id, img_url = response_chance(redis_client, messages)
+
+        print(chance, target_message_id)
+
+        key_message = get_messages(redis_client, [target_message_id])[0]
+
+        print(key_message)
 
         roll = random.randrange(100)
 
